@@ -1,7 +1,7 @@
 
 
 PROGMEM prog_uint16_t clearTo[]={
-  877, 0, 0,0,  0,128,0,1022, 13, 65,48};
+  877, 0, 0,0,  0,128,0,1022, 13 , 65,48};
 /*
 //13 = 1011 -  sync ON, shiftDir OFF,tuned ON,repeat ON, 
  
@@ -124,21 +124,21 @@ int buffer[NUMBER_OF_SOUNDS][NUMBER_OF_VARIABLES];
 unsigned char variable[NUMBER_OF_SOUNDS][NUMBER_OF_BYTES];
 /*
 unsigned char variableCop[NUMBER_OF_SOUNDS][NUMBER_OF_BYTES];
-void copyPreset(){
-  for(int i=0;i<NUMBER_OF_SOUNDS;i++){
-    for(int j=0;j<NUMBER_OF_BYTES;j++){
-      variableCop[i][j]=variable[i][j];
-    } 
-  }
-}
-void pastePreset(){
-  for(int i=0;i<NUMBER_OF_SOUNDS;i++){
-    for(int j=0;j<NUMBER_OF_BYTES;j++){
-      variable[i][j]=variableCop[i][j];
-    } 
-  }
-}
-*/
+ void copyPreset(){
+ for(int i=0;i<NUMBER_OF_SOUNDS;i++){
+ for(int j=0;j<NUMBER_OF_BYTES;j++){
+ variableCop[i][j]=variable[i][j];
+ } 
+ }
+ }
+ void pastePreset(){
+ for(int i=0;i<NUMBER_OF_SOUNDS;i++){
+ for(int j=0;j<NUMBER_OF_BYTES;j++){
+ variable[i][j]=variableCop[i][j];
+ } 
+ }
+ }
+ */
 void initMem(){
   //calculateBitDepth();
   loadPreset(currentBank,currentPreset);
@@ -325,6 +325,7 @@ long myMap(long x,  long in_max,  long out_max)
 {
   return (x) * (out_max) / (in_max);
 }
+
 
 
 

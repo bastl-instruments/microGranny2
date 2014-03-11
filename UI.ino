@@ -90,7 +90,7 @@ void playSound(unsigned char _sound){
   sound=_sound;
 
   if(_sound<=83 && _sound>=23){
-    startEnvelope(midiVelocity);
+    startEnvelope(midiVelocity,attackInterval);
     loadName(activeSound);
     startPlayback(activeSound);
     loadValuesFromMemmory(_sound);
@@ -99,7 +99,7 @@ void playSound(unsigned char _sound){
 
     activeSound=_sound;
     loadName(activeSound);
-    startEnvelope(DEFAULT_VELOCITY);
+    startEnvelope(DEFAULT_VELOCITY,attackInterval);
     startPlayback(activeSound);
     loadValuesFromMemmory(activeSound);
 
@@ -564,6 +564,8 @@ void renderKnobs(){
 }
 
 void renderDisplay(){
+  
+  
   if(shift){
     //  hw.displayText("set "); 
     // hw.displayChar(activeSound+49,3);
@@ -594,7 +596,7 @@ void renderDisplay(){
     showSampleName(); 
     noDots();
   }
-
+//showValue(bytesAvailable);
 }
 
 

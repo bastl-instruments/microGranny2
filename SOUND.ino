@@ -15,7 +15,7 @@ long instantStart,instantEnd;
 unsigned char envelopePhase;
 long envelopeTime;
 int envelopeNow;
-int attackInterval, releaseInterval;
+
 
 long startTime;
 unsigned char lfoAmt;
@@ -143,12 +143,14 @@ void renderLooping(){
 
 
 unsigned char velocity;
-void startEnvelope(unsigned char _velocity){
+int attackInt;
+void startEnvelope(unsigned char _velocity,int _attack){
   envelopeTime=millis();
   envelopeNow=37;
   envelopePhase=0;
   wave.setVolume(envelopeNow);
   velocity=31-(_velocity>>2);
+  attackInt=_attack;
 }
 
 void stopEnvelope(){
@@ -162,10 +164,10 @@ void stopEnvelope(){
 void renderEnvelope(){
   switch(envelopePhase){
   case 0:
-    if(attackInterval==0) envelopePhase=1, envelopeNow=0,wave.setVolume(envelopeNow);
-    else if(millis()-envelopeTime>=attackInterval){
+    if(attackInt==0) envelopePhase=1, envelopeNow=0,wave.setVolume(envelopeNow);
+    else if(millis()-envelopeTime>=attackInt){
       envelopeTime=millis();
-      if(attackInterval<30) envelopeNow-=3;
+      if(attackInt<30) envelopeNow-=3;
       else envelopeNow--;
       if(envelopeNow<=velocity) envelopeNow=0, envelopePhase=1;
       wave.setVolume(envelopeNow);

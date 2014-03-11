@@ -20,9 +20,11 @@ boolean sustain;
 boolean legato;
 unsigned char channelSide=0;
 unsigned char sideNote=1;
+unsigned char sideDecay;
 //int pitchBendNow;
 int sampleRateNow;
 unsigned char setting;
+int attackInterval, releaseInterval;
 //long legatoPosition;
 PROGMEM prog_uint16_t noteSampleRateTable[49]={/*0-C*/
   2772,2929,3103,3281,3500,3679,3910,4146,4392,4660,4924,5231,5528,5863,6221,6579,6960,7355,7784,8278,8786,9333,9847,10420,11023,11662,12402,13119,13898,14706,15606,16491,17550,18555,19677,20857,22050,23420,24807,26197,27815,29480,29480,29480,29480,29480,29480,29480,/*48-C*/29480};
@@ -52,8 +54,9 @@ unsigned char noteToPlay(){
 
 void putNoteIn(unsigned char note){
 
-  // check if the note is already in the buffer if yes put it to the first position
-  if(notesInBuffer<BUFFER_SIZE){
+  if(notesInBuffer==BUFFER_SIZE-1) removeNote(midiBuffer[BUFFER_SIZE-1]);
+  removeNote(note); // check if the note is already in the buffer if yes remove it
+  if(notesInBuffer<BUFFER_SIZE){ //put the note to the first position
     if(notesInBuffer>ZERO){ 
       shiftBufferRight();
     }
@@ -62,6 +65,8 @@ void putNoteIn(unsigned char note){
     thereIsNoteToPlay=true;
     fromBuffer=ZERO;
   }
+
+
   if(thereIsNoteToPlay) {
     if(legato && note>=23 && note<66) sound=note,sampleRateNow=(pgm_read_word_near(noteSampleRateTable+sound-23)),wave.setSampleRate(sampleRateNow);
     else playSound(midiBuffer[ZERO]);
@@ -73,9 +78,7 @@ void clearBuffer(){
   for(int i=ZERO;i<BUFFER_SIZE;i++) midiBuffer[i]=EMPTY;
   notesInBuffer=0;
 }
-
-unsigned char putNoteOut(unsigned char note){
-
+boolean removeNote(unsigned char note){
   if(notesInBuffer>ZERO){ 
     unsigned char takenOut;
     boolean takeOut=ZERO;
@@ -85,22 +88,31 @@ unsigned char putNoteOut(unsigned char note){
     } 
 
     if(takeOut){
-
       shiftBufferLeft(takenOut);
       notesInBuffer--;
       for(int i=notesInBuffer;i<BUFFER_SIZE;i++) midiBuffer[i]=EMPTY;
-      if(notesInBuffer>0){
-        if(midiBuffer[ZERO]!=sound) {
-          if(legato && midiBuffer[ZERO]>=23 && midiBuffer[ZERO]<66) sound=midiBuffer[ZERO],sampleRateNow=(pgm_read_word_near(noteSampleRateTable+sound-23)),wave.setSampleRate(sampleRateNow);
-          else playSound(midiBuffer[ZERO]),instantLoop=0;
-        } //legatoPosition=wave.getCurPosition(),
-      }
-      else if(!sustain) stopEnvelope(),instantLoop=0;
-      return midiBuffer[ZERO];
-
+      return true;
     }
+    else return false;
 
   }
+}
+unsigned char putNoteOut(unsigned char note){
+
+  if(removeNote(note)){
+
+    if(notesInBuffer>0){
+      if(midiBuffer[ZERO]!=sound) {
+        if(legato && midiBuffer[ZERO]>=23 && midiBuffer[ZERO]<66) sound=midiBuffer[ZERO],sampleRateNow=(pgm_read_word_near(noteSampleRateTable+sound-23)),wave.setSampleRate(sampleRateNow);
+        else playSound(midiBuffer[ZERO]),instantLoop=0;
+      } //legatoPosition=wave.getCurPosition(),
+    }
+    else if(!sustain) stopEnvelope(),instantLoop=0;
+    return midiBuffer[ZERO];
+
+  }
+
+
 
 
 }
@@ -116,14 +128,17 @@ void initMidi(){
 }
 #define SIDE_CHANNEL 1022
 #define SIDE_NOTE 1021
+#define SIDE_DECAY 1020
 void ShouldIChangeMidiChannel(){
 
 }
 unsigned char controler, CCvalue;
 void readMidiChannel(){
-  
+
   channelSide=EEPROM.read(SIDE_CHANNEL);
+
   sideNote=EEPROM.read(SIDE_NOTE);
+  sideDecay=EEPROM.read(SIDE_DECAY);
   channel=EEPROM.read(MIDI_CHANNEL);
   if(channel>16) EEPROM.write(MIDI_CHANNEL,0), channel=0;
 
@@ -134,7 +149,8 @@ void readMidiChannel(){
   hw.update();
   for(int i=0;i<6;i++){
     if(hw.buttonState(bigButton[i])){
-      if(hw.buttonState(UP)) channelSide=i+6*hw.buttonState(FN), EEPROM.write(SIDE_CHANNEL,channelSide), showValue(channelSide+1), hw.displayChar('S',0), hw.displayChar('C',1); 
+      if(hw.buttonState(UP) && hw.buttonState(DOWN)) sideDecay=i, EEPROM.write(SIDE_DECAY,sideDecay), showValue(sideDecay), hw.displayChar('S',0), hw.displayChar('D',1);
+      else if(hw.buttonState(UP)) channelSide=i+6*hw.buttonState(FN), EEPROM.write(SIDE_CHANNEL,channelSide), showValue(channelSide+1), hw.displayChar('S',0), hw.displayChar('C',1); 
       else if(hw.buttonState(DOWN)) sideNote=i+60*hw.buttonState(FN), EEPROM.write(SIDE_NOTE,sideNote), showValue(sideNote), hw.displayChar('S',0), hw.displayChar('N',1); 
       else channel=i+6*hw.buttonState(FN),EEPROM.write(MIDI_CHANNEL,channel);
     }
@@ -151,14 +167,19 @@ long lastClockPosition, clockLength;
 //unsigned char pByte1,pByte2;
 //boolean pb;
 boolean side;
+int bytesAvailable;
 void readMidi(){
   //channel=map(analogRead(4),0,1024,0,16);
   while(Serial.available() > 0){
-    if (Serial.available() > 0) {
+    bytesAvailable=Serial.available();
+    if (bytesAvailable <= 0) return;
+    if(bytesAvailable>=64) Serial.flush(); // If the buffer is full -> Don't Panic! Call the Vogons to destroy it.
+    else {
 
       // read the incoming byte:
+       // Serial.write(incomingByte); // thru
       unsigned char incomingByte = Serial.read();
-      Serial.write(incomingByte);
+    
 
       switch (state){      
       case 0:
@@ -254,19 +275,11 @@ void readMidi(){
               if(comandOff){
                 putNoteOut(note);
                 comandOff=false;
-                /*
-                Serial.write(144 | channel);
-                 Serial.write(note);
-                 Serial.write(0);
-                 */
+               
               }
               else{
                 midiVelocity=incomingByte;
-                /*
-                Serial.write(144 | channel);
-                 Serial.write(note);
-                 Serial.write(midiVelocity);
-                 */
+            
                 putNoteIn(note);
                 // hw.freezeAllKnobs();
 
@@ -276,11 +289,7 @@ void readMidi(){
             else{ 
               putNoteOut(note);
               comandOff=false;
-              /*
-                Serial.write(144 | channel);
-               Serial.write(note);
-               Serial.write(0);
-               */
+             
               // midiNoteOn=false;
             }
           }
@@ -293,13 +302,16 @@ void readMidi(){
         // state=0;
 
       } 
-      //      Serial.write(incomingByte);
+       //    Serial.write(incomingByte);
     }
   }
 }
 
 void proceedSideChain(unsigned char _note){
-  if(_note==sideNote) startEnvelope(midiVelocity);
+  if(_note==sideNote){
+    if(sideDecay==0) startEnvelope(midiVelocity,attackInterval);
+    else startEnvelope(midiVelocity,sideDecay<<2);
+  }
 }
 boolean handleRealTime(unsigned char _incomingByte){
   if(_incomingByte==0xF8){ //clock
@@ -361,6 +373,11 @@ void proceedPB(unsigned char _byte1,unsigned char _byte2){
  wave.setSampleRate(sampleRateNow+pitchBendNow);
  }
  */
+
+
+
+
+
 
 
 

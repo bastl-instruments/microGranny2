@@ -13,8 +13,13 @@
  * based on WaveRP library Adafruit Wave Shield - Copyright (C) 2009 by William Greiman
  * -library heavily hacked - BIG THX https://code.google.com/p/waverp/
  * 
+ * needs SD Fat library too https://code.google.com/p/sdfatlib/
+ *
+ *
+ *
  * -thanks for understanding basics thru Mozzi library http://sensorium.github.io/Mozzi/
  * -written in Arduino + using SDFat library
+ *
  * 
  * beta testing and help: Ondrej Merta, Ryba, HRTL
  *
@@ -98,7 +103,7 @@ void setup(void) {
   //Serial.begin(9600);
   
   
-  playBegin("CE.WAV",7);
+  playBegin("ZZ.WAV",7);
   initMidi();
   initMem(); 
  //  clearMemmory();
@@ -113,8 +118,13 @@ void restoreAnalogRead()
 
 void loop() {
   readMidi();
+ // readMidi();
   UI();
+ // readMidi();
+ // readMidi();
   updateSound();
+ // readMidi();
+ // readMidi();
 }
 
 
