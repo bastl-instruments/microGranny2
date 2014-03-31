@@ -28,16 +28,16 @@ void updateSound(){
   // wave.getData();
   if(shiftDir && rand(2)==0) shiftSpeed=-shiftSpeed;
   if(notesInBuffer>0 || envelopePhase==2 || sustain){
-    
+
     if(!wave.isPaused()){ //isPlaying
-     renderEnvelope();
+      renderEnvelope();
       renderLooping();
       renderGranular();
-     
+
     }
     else {
-     // setSetting(midiBuffer[ZERO]);
-     setSetting(activeSound);
+      // setSetting(midiBuffer[ZERO]);
+      setSetting(activeSound);
       if(repeat){
         loadValuesFromMemmory(sound);
       } 
@@ -56,7 +56,7 @@ void updateSound(){
 
 int instantClockCounter;
 void renderLooping(){
-
+long _pos=wave.getCurPosition();
   if(instantLoop==2){
     if(sync){
       if((clockCounter % instantClockCounter)==0){
@@ -68,7 +68,7 @@ void renderLooping(){
     }
     else{
       if(shiftSpeed<0 && loopLength!=0){ 
-        if(wave.getCurPosition()<=instantEnd){
+        if(_pos<=instantEnd){
           wave.pause();
           wave.seek(instantStart);
           wave.resume();
@@ -76,7 +76,7 @@ void renderLooping(){
         }
       }
       else{
-        if(wave.getCurPosition()>=instantEnd){
+        if(_pos>=instantEnd){
           wave.pause();
           wave.seek(instantStart);
           wave.resume();
@@ -86,59 +86,68 @@ void renderLooping(){
     }
   }
   else{
-  
 
-      if(shiftSpeed<0 && loopLength!=0){ 
-        if(sync){
-          if(endIndex!=1000){
-            if((clockCounter % endIndex)==0){
-              if(repeat) wave.pause(),loadValuesFromMemmory(sound);
-              else stopSound();
-            }
-          }
-        }
-        else{
-          if(wave.getCurPosition()<= startPosition ){
-            if(repeat) wave.pause(),loadValuesFromMemmory(sound), wave.pause(), lastPosition=endPosition,wave.seek(lastPosition),wave.resume();
-            else stopSound();
-          }
-        }
 
-      }
-      else{
-        if(wave.getCurPosition()<=startPosition) loadValuesFromMemmory(sound);
-        if(sync){
-          if(endIndex!=1000){
-            if((clockCounter % endIndex)==0){
-              if(repeat) wave.pause(),loadValuesFromMemmory(sound);
-              else stopSound();
-            }
-          }
-        }
-        else{
-          if(wave.getCurPosition()>=endPosition){
+    if(shiftSpeed<0 && loopLength!=0){ 
+      if(sync){
+        if(endIndex!=1000){
+          if((clockCounter % endIndex)==0){
             if(repeat) wave.pause(),loadValuesFromMemmory(sound);
             else stopSound();
           }
         }
       }
+      else{
+        if(_pos<= startPosition ){
+          if(repeat) wave.pause(),loadValuesFromMemmory(sound), wave.pause(), lastPosition=endPosition,wave.seek(lastPosition),wave.resume();
+          else stopSound();
+        }
+      }
+/*
+      if(_pos>= lastPosition ){
+        lastPosition+=shiftSpeed;
+
+        wave.pause();
+        wave.seek(lastPosition);
+        wave.resume();
+      }
+*/
+
     }
-    //
-    /*
     else{
-
-      if(wave.getCurPosition()>=endPosition){
-        if(repeat) wave.pause(),loadValuesFromMemmory(sound);
-        else stopSound();
+      if(_pos<=startPosition) loadValuesFromMemmory(sound);
+      if(sync){
+        if(endIndex!=1000){
+          if((clockCounter % endIndex)==0){
+            if(repeat) wave.pause(),loadValuesFromMemmory(sound);
+            else stopSound();
+          }
+        }
       }
-
-      if(wave.isPaused()){
-        if(repeat) loadValuesFromMemmory(sound);
-        else stopSound();
+      else{
+        if(_pos>=endPosition){
+          if(repeat) wave.pause(),loadValuesFromMemmory(sound);
+          else stopSound();
+        }
       }
     }
-    */
-//  }
+  }
+  //
+  /*
+    else{
+   
+   if(wave.getCurPosition()>=endPosition){
+   if(repeat) wave.pause(),loadValuesFromMemmory(sound);
+   else stopSound();
+   }
+   
+   if(wave.isPaused()){
+   if(repeat) loadValuesFromMemmory(sound);
+   else stopSound();
+   }
+   }
+   */
+  //  }
 }
 
 
@@ -236,7 +245,7 @@ int rand( int minval,  int maxval)
 long granularTime;
 void renderGranular(){
 
-         
+
 
   if(loopLength!=0){
     if(lastLL==0) lastPosition=wave.getCurPosition();
@@ -253,13 +262,13 @@ void renderGranular(){
          else _shiftSpeed=(int)-pgm_read_word_near(usefulLengths+(abs(_shiftSpeed)>>3)) * clockLength;
          // sync shiftSpeed - unnecessary 
          */
-         /*
+        /*
         if(shiftDir){
-          if(rand(2)==0) lastPosition+=_shiftSpeed;
-          else lastPosition-=_shiftSpeed;
-        }
-        else 
-        */
+         if(rand(2)==0) lastPosition+=_shiftSpeed;
+         else lastPosition-=_shiftSpeed;
+         }
+         else 
+         */
         lastPosition+=_shiftSpeed; //shift speed clock ???
 
         wave.pause();
@@ -290,4 +299,5 @@ void renderGranular(){
   lastLL=loopLength;
 
 }
+
 

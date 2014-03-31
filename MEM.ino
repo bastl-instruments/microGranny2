@@ -92,7 +92,7 @@ PROGMEM prog_uint16_t maxValue[]={
 #define CHANNEL_BYTE 1023
 
 
-unsigned char variableDepth[NUMBER_OF_VARIABLES]={
+const unsigned char variableDepth[NUMBER_OF_VARIABLES]={
   10,7,7,7, 7,8,10,10,8, 7,7};
 
 
@@ -101,7 +101,7 @@ int maxVal(int _maxVal){
   return  pgm_read_word_near(maxValue+_maxVal);
 }
 
-unsigned char byteCoordinate[NUMBER_OF_VARIABLES]={
+const unsigned char byteCoordinate[NUMBER_OF_VARIABLES]={
   0, 1, 2, 3, 3, 4, 5, 7, 8, 9, 10} 
 ;
 
@@ -111,11 +111,10 @@ unsigned char byteCoordinate[NUMBER_OF_VARIABLES]={
  ;
  */
 
-unsigned char bitCoordinate[NUMBER_OF_VARIABLES]={
+const unsigned char bitCoordinate[NUMBER_OF_VARIABLES]={
   0, 2, 1, 0, 7, 6, 6, 0, 2, 2, 1};
 
-unsigned char currentPreset=0;
-unsigned char currentBank=0;
+
 /*
 int buffer[NUMBER_OF_SOUNDS][NUMBER_OF_VARIABLES];
  unsigned char bufferP[NUMBER_OF_STEPS];
@@ -291,12 +290,15 @@ void clearMemmory(){
 
 void clearPreset(){
   for(int i=0;i<NUMBER_OF_SOUNDS;i++){
-    for(int j=0;j<NUMBER_OF_VARIABLES;j++){
-      setVar(i,j, pgm_read_word_near(clearTo+j));
-    }
+    clearSound(i);
+
   }
 }
-
+void clearSound(unsigned char i){
+  for(int j=0;j<NUMBER_OF_VARIABLES;j++){
+    setVar(i,j, pgm_read_word_near(clearTo+j));
+  } 
+}
 boolean inBetween(int val1,int val2,int inBet){
 
   boolean retVal;
@@ -325,21 +327,5 @@ long myMap(long x,  long in_max,  long out_max)
 {
   return (x) * (out_max) / (in_max);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

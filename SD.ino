@@ -1,4 +1,4 @@
-char name[19]="30.WAV";
+char name[7]="30.WAV";
 #define SLOW_INTERVAL 100
 #define FAST_INTERVAL 50
 //#include <wiring.c>
@@ -102,8 +102,16 @@ void error(char* str) {
 
 
 // record a track
+unsigned char updt;
+
 void trackRecord(unsigned char _sound,unsigned char _preset) {
   stopSound();
+  //  Serial.flush();
+  // Serial.end();
+
+  //name="30.WAV";
+  // noInterrupts();
+
   name[0]=currentBank + 48;
   _preset=currentPreset*6+_sound;
   if(_preset<10) name[1]=_preset+48;
@@ -113,27 +121,28 @@ void trackRecord(unsigned char _sound,unsigned char _preset) {
   if (file.open(&root,name, O_READ)) {
     file.close();
     if (SdFile::remove(&root, name)) {
-    //  hw.displayText("redy");
+      //  hw.displayText("redy");
     } 
-    else {
-    //  hw.displayText("eror");
-
-    }
+    else return;
 
     // return;
 
   }
   if (!file.createContiguous(&root, name, MAX_FILE_SIZE)) {
-  //  hw.displayText("eror");
+    //  hw.displayText("eror");
     return;
   }
   wave.adcInit(RECORD_RATE, MIC_ANALOG_PIN, ADC_REFERENCE);
   hw.displayText("redy");
   hw.setLed(bigButton[_sound],true);
 
+
   while(1){
-    hw.updateDisplay();
+    updt++;
+    if(updt>3) updt=0, hw.updateDisplay(); 
     hw.updateButtons();
+    hw.updateDisplay();
+
     // hw.updateMatrix(); //hack
     blinkLed(REC,FAST_INTERVAL);
     //   for(int i=0;i<NUMBER_OF_BIG_BUTTONS;i++) {
@@ -151,32 +160,53 @@ void trackRecord(unsigned char _sound,unsigned char _preset) {
       break;
     }
   }
-  if(!rec) return;
+  if(!rec){
+    chacha();
+    return;
+  }
   else recording=false,recSound=0,rec=false;
-  hw.dimForRecord(bigButton[_sound]);
+
   if(!wave.record(&file, RECORD_RATE, MIC_ANALOG_PIN, ADC_REFERENCE)) {
     hw.displayText("eror");
     file.remove();
     return;
   } 
+  hw.dimForRecord(bigButton[_sound]);
 
   pinMode(6,INPUT_PULLUP);
 
   while (wave.isRecording()) { //udělat něco jako delay
     if(!digitalRead(6)) wave.stop(); //hw.justPressed(REC)) 
   }
+  wave.stop();
+
 
   wave.trim(&file);
   file.close();
-
+  clearSound(_sound);
   setVar(_sound,SAMPLE_NAME_1,name[0]);
   setVar(_sound,SAMPLE_NAME_2,name[1]);
-//  recorded=true;
- // setVar(_sound,MODE,1);
+  //  recorded=true;
+  // setVar(_sound,MODE,1);
   indexed(_sound,false);
 
-  restoreAnalogRead();
-  noDots();
+  chacha();
+  // restoreAnalogRead();
+  //  noDots();
+  //  Serial.begin(MIDI_BAUD);
+  // Serial.flush();
+  //recorded=255;
 }
+
+
+
+void chacha(){
+  storePreset(currentBank,currentPreset);
+  EEPROM.write(1001,currentBank);
+  EEPROM.write(1002,currentPreset);
+  EEPROM.write(1000,1),software_Reset(); 
+}
+
+
 
 

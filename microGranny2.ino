@@ -94,7 +94,10 @@ long seekTo;
 unsigned char crush;
 unsigned char volume;
 long lastPosition;
-
+unsigned char currentPreset=0;
+unsigned char currentBank=0;
+#define E_BANK 1001
+#define E_PRESET 1002
 
 void setup(void) {
 
@@ -103,11 +106,14 @@ void setup(void) {
   //Serial.begin(9600);
   
   
-  playBegin("ZZ.WAV",7);
+ if(!EEPROM.read(1000)) playBegin("ZZ.WAV",7);
+ else EEPROM.write(1000,0),currentPreset=EEPROM.read(E_PRESET),currentBank=EEPROM.read(E_BANK);
   initMidi();
+   //Serial.begin(MIDI_BAUD);
+
   initMem(); 
  //  clearMemmory();
-//  restoreAnalogRead();
+  restoreAnalogRead();
  // hw.freezeAllKnobs();
 }
 
@@ -116,8 +122,14 @@ void restoreAnalogRead()
   ADCSRA=135; // default ARDUINO B10000111
 }
 
+
+void software_Reset() // Restarts program from beginning but does not reset the peripherals and registers
+{
+asm volatile ("  jmp 0");  
+} 
+
 void loop() {
-  readMidi();
+readMidi();//,hw.displayText("midi");
  // readMidi();
   UI();
  // readMidi();

@@ -21,7 +21,7 @@ boolean legato;
 unsigned char channelSide=0;
 unsigned char sideNote=1;
 unsigned char sideDecay;
-//int pitchBendNow;
+//int pitchBendNow;   
 int sampleRateNow;
 unsigned char setting;
 int attackInterval, releaseInterval;
@@ -53,7 +53,7 @@ unsigned char noteToPlay(){
 
 
 void putNoteIn(unsigned char note){
-
+  if(note<6) hw.freezeAllKnobs();
   if(notesInBuffer==BUFFER_SIZE-1) removeNote(midiBuffer[BUFFER_SIZE-1]);
   removeNote(note); // check if the note is already in the buffer if yes remove it
   if(notesInBuffer<BUFFER_SIZE){ //put the note to the first position
@@ -68,7 +68,7 @@ void putNoteIn(unsigned char note){
 
 
   if(thereIsNoteToPlay) {
-    if(legato && note>=23 && note<66) sound=note,sampleRateNow=(pgm_read_word_near(noteSampleRateTable+sound-23)),wave.setSampleRate(sampleRateNow);
+    if(legato && note>=23 && note<66 && notesInBuffer>1) sound=note,sampleRateNow=(pgm_read_word_near(noteSampleRateTable+sound-23)),wave.setSampleRate(sampleRateNow);
     else playSound(midiBuffer[ZERO]);
   }
   //  hw.freezAllKnobs();
@@ -98,6 +98,7 @@ boolean removeNote(unsigned char note){
   }
 }
 unsigned char putNoteOut(unsigned char note){
+  if(note<6) hw.freezeAllKnobs();
 
   if(removeNote(note)){
 
@@ -121,7 +122,6 @@ unsigned char putNoteOut(unsigned char note){
 
 void initMidi(){
   clearBuffer();
-  ShouldIChangeMidiChannel();
   readMidiChannel();
   Serial.begin(MIDI_BAUD);
 
@@ -129,9 +129,7 @@ void initMidi(){
 #define SIDE_CHANNEL 1022
 #define SIDE_NOTE 1021
 #define SIDE_DECAY 1020
-void ShouldIChangeMidiChannel(){
 
-}
 unsigned char controler, CCvalue;
 void readMidiChannel(){
 
@@ -169,6 +167,8 @@ long lastClockPosition, clockLength;
 boolean side;
 int bytesAvailable;
 void readMidi(){
+
+
   //channel=map(analogRead(4),0,1024,0,16);
   while(Serial.available() > 0){
     bytesAvailable=Serial.available();
@@ -177,9 +177,9 @@ void readMidi(){
     else {
 
       // read the incoming byte:
-       // Serial.write(incomingByte); // thru
+
       unsigned char incomingByte = Serial.read();
-    
+      Serial.write(incomingByte); // thru
 
       switch (state){      
       case 0:
@@ -275,11 +275,11 @@ void readMidi(){
               if(comandOff){
                 putNoteOut(note);
                 comandOff=false;
-               
+
               }
               else{
                 midiVelocity=incomingByte;
-            
+
                 putNoteIn(note);
                 // hw.freezeAllKnobs();
 
@@ -289,7 +289,7 @@ void readMidi(){
             else{ 
               putNoteOut(note);
               comandOff=false;
-             
+
               // midiNoteOn=false;
             }
           }
@@ -302,7 +302,7 @@ void readMidi(){
         // state=0;
 
       } 
-       //    Serial.write(incomingByte);
+      //    Serial.write(incomingByte);
     }
   }
 }
@@ -373,26 +373,4 @@ void proceedPB(unsigned char _byte1,unsigned char _byte2){
  wave.setSampleRate(sampleRateNow+pitchBendNow);
  }
  */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
